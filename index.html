@@ -1073,14 +1073,7 @@ function setupEvents() {
     p.onclick = () => applyFilter(p.dataset.filter);
   });
 
-  // Status auto-save
-  document.getElementById('status-select').onchange = e => {
-    const biz = filtered[currentIdx];
-    getBS(biz.id).stat = e.target.value;
-    saveState();
-    renderDashboard();
-    updateCounters();
-  };
+  // Status saved via QS buttons (status-select removed)
 
   // Notes auto-save
   let notesTimer;
