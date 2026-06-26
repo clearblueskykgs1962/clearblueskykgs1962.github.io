@@ -45,16 +45,16 @@ html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-ap
 .panel-header{padding:9px 14px;font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;display:flex;align-items:center;gap:8px;flex-shrink:0}
 
 /* Blue - Business */
-#panel-biz{border:2px solid #3b82f6;background:#0f172a}
+#panel-biz{border:2px solid #3b82f6;background:#0f172a;box-shadow:0 0 16px rgba(59,130,246,.18)}
 #panel-biz .panel-header{background:linear-gradient(90deg,#1d4ed8,#2563eb);color:#fff}
 /* Purple - Script */
-#panel-script{border:2px solid #8b5cf6;background:#0f172a}
+#panel-script{border:2px solid #8b5cf6;background:#0f172a;box-shadow:0 0 16px rgba(139,92,246,.18)}
 #panel-script .panel-header{background:linear-gradient(90deg,#6d28d9,#7c3aed);color:#fff}
 /* Green - Log */
-#panel-log{border:2px solid #22c55e;background:#0f172a}
+#panel-log{border:2px solid #22c55e;background:#0f172a;box-shadow:0 0 16px rgba(34,197,94,.18)}
 #panel-log .panel-header{background:linear-gradient(90deg,#15803d,#16a34a);color:#fff}
 /* Orange - Dashboard */
-#panel-dash{border:2px solid #f97316;background:#0f172a}
+#panel-dash{border:2px solid #f97316;background:#0f172a;box-shadow:0 0 16px rgba(249,115,22,.18)}
 #panel-dash .panel-header{background:linear-gradient(90deg,#c2410c,#ea580c);color:#fff}
 
 .panel-body{padding:12px 14px;flex:1;overflow-y:auto;min-height:0}
@@ -67,8 +67,8 @@ html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-ap
 #biz-name-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
 #biz-name{font-size:22px;font-weight:700;color:#f1f5f9}
 #biz-num-display{font-size:12px;color:#64748b}
-#biz-contact-row{font-size:14px;color:#60a5fa;margin-bottom:2px}
-#biz-title-row{font-size:12px;color:#64748b;margin-bottom:10px}
+#biz-contact-row{font-size:14px;color:#60a5fa;margin-bottom:10px}
+#biz-title-row{font-size:12px;color:#64748b;margin-bottom:0;display:none}
 .phone-btn{display:flex;align-items:center;justify-content:space-between;background:#0d2d1e;border:2px solid #22c55e;border-radius:8px;padding:10px 14px;text-decoration:none;color:#4ade80;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px;transition:background .2s}
 .phone-btn:hover{background:#14532d}
 .phone-btn .gvoice{font-size:11px;color:#86efac;background:#166534;padding:3px 8px;border-radius:4px}
@@ -121,6 +121,9 @@ html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-ap
 .dash-item{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;transition:background .15s}
 .dash-item:hover{background:#1e293b}
 .dash-item.current{background:#1e293b;border-left:2px solid #f97316;padding-left:4px}
+.dash-sub{display:flex;gap:6px;align-items:center;font-size:11px;margin-top:1px}
+.dash-contact-name{color:#60a5fa;font-weight:600}
+.dash-action-text{color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
 .dash-num{font-size:11px;color:#64748b;width:22px;text-align:right;flex-shrink:0}
 .dash-info{flex:1;min-width:0}
 .dash-bname{font-size:13px;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -147,8 +150,11 @@ html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-ap
     <div class="brand">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l1.27-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
       Cordell Jones Caller
-      <span class="call-count" id="call-count">0/575 called</span>
+      <span class="call-count" id="call-count">0/575 called</span><span class="call-count" id="zoom-count" style="margin-left:8px;color:#a78bfa">Zooms: 0</span><span class="call-count" id="fu-count" style="margin-left:8px;color:#fbbf24">FU: 0</span>
     </div>
+    <select id="city-select" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:5px 10px;border-radius:6px;font-size:13px;cursor:pointer">
+      <option value="savannah">Savannah, GA (575)</option>
+    </select>
     <div class="nav-controls">
       <button class="nav-btn" id="prev-btn">← Prev</button>
       <input id="biz-jump" type="number" min="1" max="575" value="1">
@@ -191,7 +197,7 @@ html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-ap
 
     <!-- TOP LEFT: BUSINESS -->
     <div class="panel" id="panel-biz">
-      <div class="panel-header">🏢 SAVANNAH, GA — BUSINESS</div>
+      <div class="panel-header" id="biz-panel-header">🏢 SAVANNAH, GA — BUSINESS</div>
       <div class="panel-body">
         <div id="biz-category-badge"></div>
         <div id="biz-name-row">
@@ -410,7 +416,7 @@ function render() {
   document.getElementById('biz-name').textContent = biz.name || '(No Name)';
   document.getElementById('biz-num-display').textContent = `${currentIdx + 1} / ${filtered.length}`;
   document.getElementById('biz-contact-row').textContent = biz.contact ? `${biz.contact} · ${biz.title || ''}` : '';
-  document.getElementById('biz-title-row').textContent = biz.category || '';
+  document.getElementById('biz-title-row').textContent = '';
 
   // Phone
   const phoneArea = document.getElementById('phone-area');
@@ -513,7 +519,7 @@ function renderDashboard() {
       <span class="status-count">${grp.items.length} items</span>
     </div>`;
     const list = document.createElement('div');
-    grp.items.slice(0, 50).forEach(({b, i}) => {
+    grp.items.forEach(({b, i}) => {
       const bs = getBS(b.id);
       const div = document.createElement('div');
       div.className = 'dash-item' + (i === currentIdx ? ' current' : '');
@@ -522,7 +528,7 @@ function renderDashboard() {
       div.innerHTML = `<span class="dash-num">${i+1}</span>
         <div class="dash-info">
           <div class="dash-bname">${b.name}</div>
-          <div class="dash-contact">${firstName}</div>
+          <div class="dash-sub"><span class="dash-contact-name">${firstName}</span><span class="dash-action-text">${nextAction}</span></div>
         </div>
         <span class="c-badge">C${activeScript}</span>`;
       div.onclick = () => { currentIdx = i; render(); };
@@ -540,6 +546,8 @@ function updateCounters() {
   const vmCount = businesses.filter(b => getBS(b.id).stat === 'VM').length;
 
   document.getElementById('call-count').textContent = `${totalCalled}/575 called`;
+  document.getElementById('zoom-count').textContent = `Zooms: ${mtgCount}`;
+  document.getElementById('fu-count').textContent = `FU: ${fuCount}`;
   document.getElementById('dash-total').textContent = filtered.length;
   document.getElementById('dash-called').textContent = totalCalled;
   document.getElementById('dash-mtg').textContent = mtgCount;
