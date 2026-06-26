@@ -185,16 +185,22 @@ html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-ap
 /* Tickler File */
 .tickler-section{margin-bottom:10px}
 .tickler-section-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 0 4px;margin-bottom:4px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:5px}
-.tickler-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;cursor:pointer;border:1px solid transparent;margin-bottom:3px;background:#0d1525;transition:background .15s}
+.tickler-item{padding:7px 9px;border-radius:7px;cursor:pointer;border:1px solid transparent;margin-bottom:4px;background:#0d1525;transition:background .15s}
 .tickler-item:hover{background:#1e293b}
 .tickler-item.t-current{border-color:#f97316;background:#1c1305}
 .t-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0;min-width:28px;text-align:center}
-.t-info{flex:1;min-width:0}
-.t-name{font-size:12px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.t-sub{font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.t-age{font-size:10px;font-weight:700;flex-shrink:0;text-align:right;min-width:42px}
-.t-btns{display:flex;gap:3px;flex-shrink:0}
-.t-btn{font-size:11px;padding:2px 7px;border-radius:4px;border:1px solid #334155;background:#1e293b;cursor:pointer;color:#94a3b8;line-height:1.4}
+.t-main{flex:1;min-width:0}
+.t-row1{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.t-row2{margin-bottom:3px}
+.t-row3{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.t-name{font-size:13px;font-weight:700;color:#f1f5f9;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-action{font-size:11px;color:#94a3b8;font-style:italic}
+.t-phone{font-size:12px;font-weight:600;color:#4ade80;text-decoration:none;padding:2px 8px;background:#0d2d1e;border:1px solid #22c55e44;border-radius:5px}
+.t-phone:hover{background:#14532d}
+.t-phone-none{font-size:11px;color:#475569}
+.t-age{font-size:10px;font-weight:700;flex-shrink:0;white-space:nowrap}
+.t-btns{display:flex;gap:4px;flex-shrink:0}
+.t-btn{font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid #334155;background:#1e293b;cursor:pointer;color:#94a3b8;line-height:1.4;white-space:nowrap}
 .t-btn:hover{background:#334155}
 .t-btn.reschedule:hover{border-color:#60a5fa;color:#60a5fa}
 .t-btn.done:hover{border-color:#4ade80;color:#4ade80}
@@ -682,102 +688,124 @@ function ticklerDone(bizId, e) {
 
 // ── Render tickler ────────────────────────────────────────────
 function renderTickler() {
-  const ACTIVE_STATS = new Set(['FU','CB','VM','MTG','NA']);
+  const SKIP = new Set(['DEAD','DNC']);
   const cityBiz = allBusinesses.filter(b => b.city === currentCity);
+  const today = new Date(); today.setHours(0,0,0,0);
 
-  const items = [];
+  const overdue=[], dueToday=[], upcoming=[], needsDate=[], fresh=[];
+
   cityBiz.forEach(b => {
     const bs = getBS(b.id);
-    if (!bs.stat && !bs.callbackDate && !bs.callLog?.length) return;
-    if (bs.stat === 'DEAD' || bs.stat === 'DNC') return;
+    if (SKIP.has(bs.stat)) return;
     const days = daysBetween(bs.callbackDate);
-    items.push({ b, bs, days });
+
+    if (bs.callbackDate && days !== null) {
+      if (days < 0)      overdue.push({b,bs,days});
+      else if (days===0) dueToday.push({b,bs,days});
+      else               upcoming.push({b,bs,days});
+    } else if (bs.stat && bs.stat !== '') {
+      needsDate.push({b,bs,days:null});
+    } else {
+      fresh.push({b,bs,days:null});   // never called
+    }
   });
 
-  // Sort buckets
-  const overdue  = items.filter(x => x.days !== null && x.days < 0) .sort((a,b) => a.days - b.days);
-  const dueToday = items.filter(x => x.days === 0);
-  const upcoming = items.filter(x => x.days !== null && x.days > 0) .sort((a,b) => a.days - b.days);
-  const noDate   = items.filter(x => x.days === null && ACTIVE_STATS.has(x.bs.stat));
+  overdue.sort((a,b)=>a.days-b.days);
+  upcoming.sort((a,b)=>a.days-b.days);
 
   // Summary
-  const total = overdue.length + dueToday.length + upcoming.length + noDate.length;
+  const total = overdue.length+dueToday.length+upcoming.length+needsDate.length+fresh.length;
   const sumEl = document.getElementById('tickler-summary');
-  if (sumEl) sumEl.innerHTML = total
-    ? `<span style="color:#f87171">${overdue.length} overdue</span> &nbsp;|&nbsp;
-       <span style="color:#fbbf24">${dueToday.length} today</span> &nbsp;|&nbsp;
-       <span style="color:#4ade80">${upcoming.length} upcoming</span> &nbsp;|&nbsp;
-       <span style="color:#94a3b8">${noDate.length} no date</span>`
-    : '<span style="color:#64748b">No pending actions — log calls to build your tickler.</span>';
+  if (sumEl) sumEl.innerHTML =
+    `<span style="color:#f87171">${overdue.length} overdue</span> &nbsp;|&nbsp;
+     <span style="color:#fbbf24">${dueToday.length} today</span> &nbsp;|&nbsp;
+     <span style="color:#4ade80">${upcoming.length} upcoming</span> &nbsp;|&nbsp;
+     <span style="color:#94a3b8">${needsDate.length} needs date</span> &nbsp;|&nbsp;
+     <span style="color:#60a5fa">${fresh.length} new</span>`;
 
   const dl = document.getElementById('dash-list');
   dl.innerHTML = '';
 
-  function makeSection(icon, title, color, list) {
+  function phoneLink(b) {
+    const raw = (b.phone||'').replace(/\D/g,'');
+    if (raw.length >= 10) {
+      const d = raw.length===11 ? raw.slice(1) : raw;
+      return `<a class="t-phone" href="https://voice.google.com/calls?a=nc,+1${d}" target="_blank" onclick="event.stopPropagation()">📞 ${b.phone}</a>`;
+    }
+    return `<span class="t-phone-none">No phone</span>`;
+  }
+
+  function makeSection(icon, title, color, list, limit) {
     if (!list.length) return;
+    const show = limit ? list.slice(0,limit) : list;
     const sec = document.createElement('div');
     sec.className = 'tickler-section';
     sec.innerHTML = `<div class="tickler-section-header" style="color:${color}">${icon} ${title} <span style="font-weight:400;color:#475569">(${list.length})</span></div>`;
-    list.forEach(({b, bs, days}) => {
-      const filtIdx = filtered.findIndex(f => f.id === b.id);
-      const isCurrent = filtIdx >= 0 && filtIdx === currentIdx;
+
+    show.forEach(({b,bs,days}) => {
+      const filtIdx = filtered.findIndex(f=>f.id===b.id);
+      const isCurrent = filtIdx>=0 && filtIdx===currentIdx;
       const div = document.createElement('div');
-      div.className = 'tickler-item' + (isCurrent ? ' t-current' : '');
+      div.className = 'tickler-item'+(isCurrent?' t-current':'');
 
-      const statColors = {FU:'#fbbf24',CB:'#60a5fa',VM:'#94a3b8',MTG:'#4ade80',NA:'#64748b'};
-      const sc = statColors[bs.stat] || '#64748b';
-      const firstName = (b.contact || b.principal || '').trim().split(' ')[0] || '';
-      const action = (bs.nextAction || defaultAction(bs.stat)).slice(0, 38);
+      const statColors={FU:'#fbbf24',CB:'#60a5fa',VM:'#94a3b8',MTG:'#4ade80',NA:'#64748b'};
+      const sc = statColors[bs.stat]||'#475569';
+      const action = bs.nextAction || defaultAction(bs.stat) || 'First call — introduce yourself';
 
-      let ageHtml = '';
-      if (days === null) {
-        ageHtml = `<span style="color:#64748b">No date</span>`;
-      } else if (days < 0) {
-        ageHtml = `<span style="color:#f87171">${Math.abs(days)}d late</span>`;
-      } else if (days === 0) {
-        ageHtml = `<span style="color:#fbbf24">TODAY</span>`;
-      } else {
-        ageHtml = `<span style="color:#4ade80">+${days}d</span>`;
-      }
+      let ageHtml='';
+      if (days===null)    ageHtml=`<span style="color:#475569">—</span>`;
+      else if (days<0)    ageHtml=`<span style="color:#f87171">${Math.abs(days)}d late</span>`;
+      else if (days===0)  ageHtml=`<span style="color:#fbbf24">TODAY</span>`;
+      else                ageHtml=`<span style="color:#4ade80">+${days}d</span>`;
 
       div.innerHTML = `
-        <span class="t-badge" style="background:${sc}22;color:${sc};border-color:${sc}44">${bs.stat||'—'}</span>
-        <div class="t-info">
-          <div class="t-name">${b.name}</div>
-          <div class="t-sub">${firstName}${action ? ' · ' + action : ''}</div>
-        </div>
-        <div class="t-age">${ageHtml}</div>
-        <div class="t-btns">
-          <button class="t-btn reschedule" title="Reschedule" onclick="event.stopPropagation();showReschedule('${b.id}')">📅</button>
-          <button class="t-btn done" title="Done / Remove" onclick="ticklerDone('${b.id}',event)">✓</button>
+        <div class="t-main">
+          <div class="t-row1">
+            <span class="t-badge" style="background:${sc}22;color:${sc};border-color:${sc}44">${bs.stat||'NEW'}</span>
+            <span class="t-name">${b.name}</span>
+            <span class="t-age">${ageHtml}</span>
+          </div>
+          <div class="t-row2">
+            <span class="t-action">→ ${action}</span>
+          </div>
+          <div class="t-row3">
+            ${phoneLink(b)}
+            <div class="t-btns">
+              <button class="t-btn reschedule" title="Reschedule" onclick="event.stopPropagation();showReschedule('${b.id}')">📅 Date</button>
+              <button class="t-btn done" title="Done" onclick="ticklerDone('${b.id}',event)">✓ Done</button>
+            </div>
+          </div>
         </div>`;
 
       div.onclick = () => {
-        // Collapse any expanded panel so the business card becomes visible
         collapsePanel();
-        if (filtIdx >= 0) {
-          currentIdx = filtIdx;
-          render();
-        } else {
-          applyFilter('all');
-          const ni = filtered.findIndex(f => f.id === b.id);
-          if (ni >= 0) { currentIdx = ni; render(); }
-        }
+        if (filtIdx>=0) { currentIdx=filtIdx; render(); }
+        else { applyFilter('all'); const ni=filtered.findIndex(f=>f.id===b.id); if(ni>=0){currentIdx=ni;render();} }
       };
       sec.appendChild(div);
     });
+
+    if (limit && list.length > limit) {
+      const more = document.createElement('div');
+      more.style.cssText='text-align:center;padding:6px;font-size:11px;color:#475569;cursor:pointer';
+      more.textContent=`▼ Show all ${list.length} (${list.length-limit} more)`;
+      more.onclick=()=>{ sec.remove(); makeSection(icon,title,color,list,null); dl.insertBefore(dl.firstChild,dl.firstChild); renderTickler(); };
+      sec.appendChild(more);
+    }
     dl.appendChild(sec);
   }
 
-  makeSection('🔴', 'OVERDUE',   '#f87171', overdue);
-  makeSection('🟡', 'DUE TODAY', '#fbbf24', dueToday);
-  makeSection('🟢', 'UPCOMING',  '#4ade80', upcoming);
-  makeSection('⚪', 'NEEDS DATE','#94a3b8', noDate);
+  makeSection('🔴','OVERDUE',   '#f87171', overdue,   null);
+  makeSection('🟡','DUE TODAY', '#fbbf24', dueToday,  null);
+  makeSection('🟢','UPCOMING',  '#4ade80', upcoming,  null);
+  makeSection('⚪','NEEDS DATE','#94a3b8', needsDate, null);
+  makeSection('🔵','NEW — Not Yet Called','#60a5fa', fresh, 30);
 
   if (!total) {
-    dl.innerHTML = '<div style="text-align:center;padding:24px 0;color:#475569;font-size:13px">No pending actions.<br><span style="font-size:11px">Log calls with FU, CB, or VM status<br>and they will appear here.</span></div>';
+    dl.innerHTML='<div style="text-align:center;padding:24px 0;color:#475569;font-size:13px">All businesses accounted for.</div>';
   }
 }
+
 
 function updateCounters() {
   const totalCalled = businesses.filter(b => getBS(b.id).callCount > 0).length;
