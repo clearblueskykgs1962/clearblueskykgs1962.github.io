@@ -181,6 +181,40 @@ html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-ap
   gap:6px;
 }
 #collapse-btn:hover { background:#334155 }
+
+/* Tickler File */
+.tickler-section{margin-bottom:10px}
+.tickler-section-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 0 4px;margin-bottom:4px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:5px}
+.tickler-item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;cursor:pointer;border:1px solid transparent;margin-bottom:3px;background:#0d1525;transition:background .15s}
+.tickler-item:hover{background:#1e293b}
+.tickler-item.t-current{border-color:#f97316;background:#1c1305}
+.t-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0;min-width:28px;text-align:center}
+.t-info{flex:1;min-width:0}
+.t-name{font-size:12px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-sub{font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-age{font-size:10px;font-weight:700;flex-shrink:0;text-align:right;min-width:42px}
+.t-btns{display:flex;gap:3px;flex-shrink:0}
+.t-btn{font-size:11px;padding:2px 7px;border-radius:4px;border:1px solid #334155;background:#1e293b;cursor:pointer;color:#94a3b8;line-height:1.4}
+.t-btn:hover{background:#334155}
+.t-btn.reschedule:hover{border-color:#60a5fa;color:#60a5fa}
+.t-btn.done:hover{border-color:#4ade80;color:#4ade80}
+/* Reschedule mini-modal */
+#reschedule-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:center;justify-content:center}
+#reschedule-modal.open{display:flex}
+#reschedule-box{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px 24px;min-width:300px;max-width:380px}
+#reschedule-box h3{font-size:14px;color:#e2e8f0;margin-bottom:4px}
+#reschedule-biz-name{font-size:12px;color:#60a5fa;margin-bottom:14px}
+#reschedule-date{width:100%;background:#0f172a;border:1px solid #475569;color:#e2e8f0;padding:8px 10px;border-radius:6px;font-size:14px;margin-bottom:12px}
+.reschedule-quick{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.rq-btn{background:#0f172a;border:1px solid #334155;color:#94a3b8;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer}
+.rq-btn:hover{background:#334155;color:#e2e8f0}
+.reschedule-footer{display:flex;gap:8px;justify-content:flex-end}
+.rs-save{background:#6366f1;border:1px solid #6366f1;color:#fff;padding:6px 16px;border-radius:6px;font-size:13px;cursor:pointer}
+.rs-save:hover{background:#4f46e5}
+.rs-dismiss{background:transparent;border:1px solid #ef4444;color:#ef4444;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer}
+.rs-dismiss:hover{background:#7f1d1d}
+.rs-cancel{background:transparent;border:1px solid #334155;color:#64748b;padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer}
+.rs-cancel:hover{background:#1e293b}
 </style>
 </head>
 <body>
@@ -335,17 +369,12 @@ html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-ap
     <!-- BOTTOM RIGHT: DASHBOARD -->
     <div class="panel" id="panel-dash">
       <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
-        <span>📊 DASHBOARD &amp; NEXT ACTIONS</span>
+        <span>📋 TICKLER FILE</span>
         <button class="expand-panel-btn" onclick="toggleExpandPanel('panel-dash')">⛶ Expand</button>
       </div>
       <div class="panel-body">
         <div class="dash-top">
-          <div class="dash-stats">
-            <span id="dash-total">575</span> total &nbsp;|&nbsp;
-            <span id="dash-called">0</span> called &nbsp;|&nbsp;
-            <span id="dash-mtg">0</span> Zooms &nbsp;|&nbsp;
-            <span id="dash-fu">0</span> FU
-          </div>
+          <div class="dash-stats" id="tickler-summary" style="font-size:11px;color:#94a3b8">Loading…</div>
           <div class="dash-progress-bar"><div class="dash-progress-fill" id="dash-fill" style="width:0%"></div></div>
         </div>
         <div id="dash-list"></div>
@@ -564,50 +593,182 @@ function renderCallHistory() {
     </div>`).join('');
 }
 
-function renderDashboard() {
-  const groups = {
-    '': {label:'NEW', cls:'new', items:[]},
-    'FU': {label:'FU – Follow Up', cls:'fu', items:[]},
-    'CB': {label:'CB – Call Back', cls:'cb', items:[]},
-    'VM': {label:'VM – Voicemail', cls:'vm', items:[]},
-    'MTG': {label:'MTG – Meeting Set', cls:'mtg', items:[]},
-    'DEAD': {label:'DEAD – Not Interested', cls:'dead', items:[]},
-    'NA': {label:'NA – No Answer', cls:'na', items:[]},
-    'DNC': {label:'DNC – Do Not Call', cls:'dnc', items:[]},
-  };
-  filtered.forEach((b, i) => {
-    const stat = getBS(b.id).stat || '';
-    if (groups[stat]) groups[stat].items.push({b, i});
+function renderDashboard() { renderTickler(); }
+
+function defaultAction(stat) {
+  const m = {FU:'Follow up',CB:'Call back',VM:'Left voicemail — follow up',MTG:'Zoom scheduled',NA:'No answer — try again',DNC:'Do not call'};
+  return m[stat] || '';
+}
+
+function todayStr() {
+  return new Date().toLocaleDateString('en-US');
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  // Try ISO (yyyy-mm-dd) or US (mm/dd/yyyy)
+  const d = new Date(str.includes('-') ? str : str.split('/').reduce((a,v,i)=>i===2?v+'-'+(a||''):a+'/'+v, ''));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function daysBetween(dateStr) {
+  if (!dateStr) return null;
+  const d = parseDate(dateStr);
+  if (!d) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  d.setHours(0,0,0,0);
+  return Math.round((d - today) / 86400000);
+}
+
+// ── Reschedule modal ──────────────────────────────────────────
+let _rescheduleId = null;
+function showReschedule(bizId) {
+  _rescheduleId = bizId;
+  const b = allBusinesses.find(x => x.id === bizId);
+  const bs = getBS(bizId);
+  document.getElementById('reschedule-biz-name').textContent = b ? b.name : bizId;
+  // Set current date in ISO format for date input
+  let iso = '';
+  if (bs.callbackDate) {
+    const d = parseDate(bs.callbackDate);
+    if (d) iso = d.toISOString().split('T')[0];
+  }
+  if (!iso) {
+    const t = new Date(); iso = t.toISOString().split('T')[0];
+  }
+  document.getElementById('reschedule-date').value = iso;
+  document.getElementById('reschedule-modal').classList.add('open');
+}
+function setRescheduleDate(daysFromNow) {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromNow);
+  document.getElementById('reschedule-date').value = d.toISOString().split('T')[0];
+}
+function closeReschedule() {
+  document.getElementById('reschedule-modal').classList.remove('open');
+  _rescheduleId = null;
+}
+function saveReschedule() {
+  if (!_rescheduleId) return;
+  const iso = document.getElementById('reschedule-date').value;
+  if (!iso) { closeReschedule(); return; }
+  const d = new Date(iso);
+  const bs = getBS(_rescheduleId);
+  bs.callbackDate = d.toLocaleDateString('en-US');
+  saveState();
+  renderTickler();
+  updateCounters();
+  closeReschedule();
+}
+function ticklerDismiss() {
+  if (!_rescheduleId) return;
+  const bs = getBS(_rescheduleId);
+  bs.callbackDate = '';
+  bs.nextAction = '';
+  saveState();
+  renderTickler();
+  updateCounters();
+  closeReschedule();
+}
+function ticklerDone(bizId, e) {
+  if (e) e.stopPropagation();
+  const bs = getBS(bizId);
+  bs.callbackDate = '';
+  bs.nextAction = '';
+  saveState();
+  renderTickler();
+  updateCounters();
+}
+
+// ── Render tickler ────────────────────────────────────────────
+function renderTickler() {
+  const ACTIVE_STATS = new Set(['FU','CB','VM','MTG','NA']);
+  const cityBiz = allBusinesses.filter(b => b.city === currentCity);
+
+  const items = [];
+  cityBiz.forEach(b => {
+    const bs = getBS(b.id);
+    if (!bs.stat && !bs.callbackDate && !bs.callLog?.length) return;
+    if (bs.stat === 'DEAD' || bs.stat === 'DNC') return;
+    const days = daysBetween(bs.callbackDate);
+    items.push({ b, bs, days });
   });
+
+  // Sort buckets
+  const overdue  = items.filter(x => x.days !== null && x.days < 0) .sort((a,b) => a.days - b.days);
+  const dueToday = items.filter(x => x.days === 0);
+  const upcoming = items.filter(x => x.days !== null && x.days > 0) .sort((a,b) => a.days - b.days);
+  const noDate   = items.filter(x => x.days === null && ACTIVE_STATS.has(x.bs.stat));
+
+  // Summary
+  const total = overdue.length + dueToday.length + upcoming.length + noDate.length;
+  const sumEl = document.getElementById('tickler-summary');
+  if (sumEl) sumEl.innerHTML = total
+    ? `<span style="color:#f87171">${overdue.length} overdue</span> &nbsp;|&nbsp;
+       <span style="color:#fbbf24">${dueToday.length} today</span> &nbsp;|&nbsp;
+       <span style="color:#4ade80">${upcoming.length} upcoming</span> &nbsp;|&nbsp;
+       <span style="color:#94a3b8">${noDate.length} no date</span>`
+    : '<span style="color:#64748b">No pending actions — log calls to build your tickler.</span>';
 
   const dl = document.getElementById('dash-list');
   dl.innerHTML = '';
-  for (const [key, grp] of Object.entries(groups)) {
-    if (!grp.items.length) continue;
+
+  function makeSection(icon, title, color, list) {
+    if (!list.length) return;
     const sec = document.createElement('div');
-    sec.className = 'status-group';
-    sec.innerHTML = `<div class="status-group-header">
-      <span><span class="status-dot ${grp.cls}"></span><span class="status-group-label">${grp.label}</span></span>
-      <span class="status-count">${grp.items.length} items</span>
-    </div>`;
-    const list = document.createElement('div');
-    grp.items.forEach(({b, i}) => {
-      const bs = getBS(b.id);
+    sec.className = 'tickler-section';
+    sec.innerHTML = `<div class="tickler-section-header" style="color:${color}">${icon} ${title} <span style="font-weight:400;color:#475569">(${list.length})</span></div>`;
+    list.forEach(({b, bs, days}) => {
+      const filtIdx = filtered.findIndex(f => f.id === b.id);
+      const isCurrent = filtIdx >= 0 && filtIdx === currentIdx;
       const div = document.createElement('div');
-      div.className = 'dash-item' + (i === currentIdx ? ' current' : '');
-      const firstName = (b.contact || b.principal || '').trim().split(' ')[0];
-      const nextAction = bs.nextAction || (bs.callLog && bs.callLog.length ? 'Follow up' : 'First call — introduce yourself');
-      div.innerHTML = `<span class="dash-num">${i+1}</span>
-        <div class="dash-info">
-          <div class="dash-bname">${b.name}</div>
-          <div class="dash-sub"><span class="dash-contact-name">${firstName}</span><span class="dash-action-text">${nextAction}</span></div>
+      div.className = 'tickler-item' + (isCurrent ? ' t-current' : '');
+
+      const statColors = {FU:'#fbbf24',CB:'#60a5fa',VM:'#94a3b8',MTG:'#4ade80',NA:'#64748b'};
+      const sc = statColors[bs.stat] || '#64748b';
+      const firstName = (b.contact || b.principal || '').trim().split(' ')[0] || '';
+      const action = (bs.nextAction || defaultAction(bs.stat)).slice(0, 38);
+
+      let ageHtml = '';
+      if (days === null) {
+        ageHtml = `<span style="color:#64748b">No date</span>`;
+      } else if (days < 0) {
+        ageHtml = `<span style="color:#f87171">${Math.abs(days)}d late</span>`;
+      } else if (days === 0) {
+        ageHtml = `<span style="color:#fbbf24">TODAY</span>`;
+      } else {
+        ageHtml = `<span style="color:#4ade80">+${days}d</span>`;
+      }
+
+      div.innerHTML = `
+        <span class="t-badge" style="background:${sc}22;color:${sc};border-color:${sc}44">${bs.stat||'—'}</span>
+        <div class="t-info">
+          <div class="t-name">${b.name}</div>
+          <div class="t-sub">${firstName}${action ? ' · ' + action : ''}</div>
         </div>
-        <span class="c-badge">C${activeScript}</span>`;
-      div.onclick = () => { currentIdx = i; render(); };
-      list.appendChild(div);
+        <div class="t-age">${ageHtml}</div>
+        <div class="t-btns">
+          <button class="t-btn reschedule" title="Reschedule" onclick="event.stopPropagation();showReschedule('${b.id}')">📅</button>
+          <button class="t-btn done" title="Done / Remove" onclick="ticklerDone('${b.id}',event)">✓</button>
+        </div>`;
+
+      div.onclick = () => {
+        if (filtIdx >= 0) { currentIdx = filtIdx; }
+        else { applyFilter('all'); const ni = filtered.findIndex(f => f.id === b.id); if (ni >= 0) currentIdx = ni; }
+        render();
+      };
+      sec.appendChild(div);
     });
-    sec.appendChild(list);
     dl.appendChild(sec);
+  }
+
+  makeSection('🔴', 'OVERDUE',   '#f87171', overdue);
+  makeSection('🟡', 'DUE TODAY', '#fbbf24', dueToday);
+  makeSection('🟢', 'UPCOMING',  '#4ade80', upcoming);
+  makeSection('⚪', 'NEEDS DATE','#94a3b8', noDate);
+
+  if (!total) {
+    dl.innerHTML = '<div style="text-align:center;padding:24px 0;color:#475569;font-size:13px">No pending actions.<br><span style="font-size:11px">Log calls with FU, CB, or VM status<br>and they'll appear here.</span></div>';
   }
 }
 
@@ -620,10 +781,10 @@ function updateCounters() {
   document.getElementById('call-count').textContent = `${totalCalled}/${businesses.length} called`;
   document.getElementById('zoom-count').textContent = `Zooms: ${mtgCount}`;
   document.getElementById('fu-count').textContent = `FU: ${fuCount}`;
-  document.getElementById('dash-total').textContent = filtered.length;
-  document.getElementById('dash-called').textContent = totalCalled;
-  document.getElementById('dash-mtg').textContent = mtgCount;
-  document.getElementById('dash-fu').textContent = fuCount;
+  if(document.getElementById('dash-total')) document.getElementById('dash-total').textContent = filtered.length;
+  if(document.getElementById('dash-called')) document.getElementById('dash-called').textContent = totalCalled;
+  if(document.getElementById('dash-mtg')) document.getElementById('dash-mtg').textContent = mtgCount;
+  if(document.getElementById('dash-fu')) document.getElementById('dash-fu').textContent = fuCount;
   const pct = businesses.length ? (totalCalled / businesses.length * 100).toFixed(1) : 0;
   document.getElementById('dash-fill').style.width = pct + '%';
 
@@ -786,6 +947,14 @@ function setupEvents() {
     if (e.key === 'Escape') document.getElementById('script-expand-modal').style.display = 'none';
   }, true);
 
+  // Reschedule modal close on backdrop click
+  document.getElementById('reschedule-modal').onclick = e => {
+    if (e.target.id === 'reschedule-modal') closeReschedule();
+  };
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('reschedule-modal').classList.contains('open')) closeReschedule();
+  }, true);
+
   // City switcher
   document.getElementById('city-select').onchange = e => {
     switchCity(e.target.value);
@@ -878,6 +1047,29 @@ document.addEventListener('keydown', e => {
 // ── START ─────────────────────────────────────────────────────
 init();
 </script>
+
+<!-- RESCHEDULE MODAL -->
+<div id="reschedule-modal">
+  <div id="reschedule-box">
+    <h3>📅 Reschedule / Update</h3>
+    <div id="reschedule-biz-name"></div>
+    <label style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Callback Date</label>
+    <input type="date" id="reschedule-date">
+    <div class="reschedule-quick">
+      <button class="rq-btn" onclick="setRescheduleDate(0)">Today</button>
+      <button class="rq-btn" onclick="setRescheduleDate(1)">+1 day</button>
+      <button class="rq-btn" onclick="setRescheduleDate(3)">+3 days</button>
+      <button class="rq-btn" onclick="setRescheduleDate(7)">+1 week</button>
+      <button class="rq-btn" onclick="setRescheduleDate(14)">+2 weeks</button>
+      <button class="rq-btn" onclick="setRescheduleDate(30)">+30 days</button>
+    </div>
+    <div class="reschedule-footer">
+      <button class="rs-cancel" onclick="closeReschedule()">Cancel</button>
+      <button class="rs-dismiss" onclick="ticklerDismiss()">✕ Remove from Tickler</button>
+      <button class="rs-save" onclick="saveReschedule()">Save Date</button>
+    </div>
+  </div>
+</div>
 
 <button id="collapse-btn" onclick="collapsePanel()">↙ Collapse</button>
 
