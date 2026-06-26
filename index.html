@@ -753,9 +753,16 @@ function renderTickler() {
         </div>`;
 
       div.onclick = () => {
-        if (filtIdx >= 0) { currentIdx = filtIdx; }
-        else { applyFilter('all'); const ni = filtered.findIndex(f => f.id === b.id); if (ni >= 0) currentIdx = ni; }
-        render();
+        // Collapse any expanded panel so the business card becomes visible
+        collapsePanel();
+        if (filtIdx >= 0) {
+          currentIdx = filtIdx;
+          render();
+        } else {
+          applyFilter('all');
+          const ni = filtered.findIndex(f => f.id === b.id);
+          if (ni >= 0) { currentIdx = ni; render(); }
+        }
       };
       sec.appendChild(div);
     });
