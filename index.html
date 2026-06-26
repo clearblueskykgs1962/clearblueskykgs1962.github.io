@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Savannah Caller – Cordell Jones</title>
+<title>Cordell Jones CRM – Multi-City Caller</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
@@ -153,11 +153,12 @@ html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-ap
       <span class="call-count" id="call-count">0/575 called</span><span class="call-count" id="zoom-count" style="margin-left:8px;color:#a78bfa">Zooms: 0</span><span class="call-count" id="fu-count" style="margin-left:8px;color:#fbbf24">FU: 0</span>
     </div>
     <select id="city-select" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:5px 10px;border-radius:6px;font-size:13px;cursor:pointer">
-      <option value="savannah">Savannah, GA (575)</option>
+      <option value="Savannah">Savannah, GA (575)</option>
+      <option value="Rexburg">Rexburg, ID (193)</option>
     </select>
     <div class="nav-controls">
       <button class="nav-btn" id="prev-btn">← Prev</button>
-      <input id="biz-jump" type="number" min="1" max="575" value="1">
+      <input id="biz-jump" type="number" min="1" id="biz-jump-max" max="575" value="1">
       <button class="nav-btn" id="next-btn">Next →</button>
     </div>
     <div class="trackers">
@@ -353,8 +354,10 @@ function getScript(num, category, contactName) {
 
 // ── APP STATE ─────────────────────────────────────────────────
 let businesses = [];
+let allBusinesses = [];
 let filtered = [];
 let currentFilter = 'all';
+let currentCity = 'Savannah';
 let currentIdx = 0;
 let activeScript = 1;
 let state = {}; // id -> {stat, notes, callLog[], nextAction, callbackDate, lastCallDate, callCount}
@@ -377,14 +380,23 @@ async function init() {
   buildWeekDots();
   try {
     const r = await fetch('./businesses.json');
-    businesses = await r.json();
+    allBusinesses = await r.json();
   } catch(e) {
     document.getElementById('biz-name').textContent = 'Error loading businesses.json';
     return;
   }
-  applyFilter('all');
+  switchCity('Savannah');
   setupEvents();
   render();
+}
+
+function switchCity(city) {
+  currentCity = city;
+  businesses = allBusinesses.filter(b => b.city === city);
+  const cityLabel = city === 'Savannah' ? 'SAVANNAH, GA' : 'REXBURG, ID';
+  document.getElementById('biz-panel-header').textContent = '🏢 ' + cityLabel + ' — BUSINESS';
+  document.getElementById('biz-jump').max = businesses.length;
+  applyFilter('all');
 }
 
 function applyFilter(f) {
@@ -412,10 +424,14 @@ function render() {
   document.getElementById('biz-position').textContent = `${currentIdx + 1} / ${filtered.length}`;
 
   // BUSINESS PANEL
-  document.getElementById('biz-category-badge').textContent = (biz.category || 'Other').toUpperCase();
+  const categoryDisplay = biz.city === 'Rexburg' && biz.scriptBucket 
+    ? `${(biz.category || 'Other').toUpperCase()} · ${biz.scriptBucket.toUpperCase()}`
+    : (biz.category || 'Other').toUpperCase();
+  document.getElementById('biz-category-badge').textContent = categoryDisplay;
   document.getElementById('biz-name').textContent = biz.name || '(No Name)';
   document.getElementById('biz-num-display').textContent = `${currentIdx + 1} / ${filtered.length}`;
-  document.getElementById('biz-contact-row').textContent = biz.contact ? `${biz.contact} · ${biz.title || ''}` : '';
+  const contactName = biz.contact || biz.principal || '';
+  document.getElementById('biz-contact-row').textContent = contactName ? `${contactName} · ${biz.title || ''}` : '';
   document.getElementById('biz-title-row').textContent = '';
 
   // Phone
@@ -477,7 +493,7 @@ function renderScript() {
   const biz = filtered[currentIdx];
   document.getElementById('script-num-label').textContent = `SCRIPT C${activeScript}`;
   document.getElementById('rec-badge').style.display = activeScript === 1 ? 'inline' : 'none';
-  document.getElementById('script-text').textContent = getScript(activeScript, biz.category || 'Other', biz.contact);
+  document.getElementById('script-text').textContent = getScript(activeScript, biz.category || 'Other', biz.contact || biz.principal || '');
 }
 
 function renderCallHistory() {
@@ -523,7 +539,7 @@ function renderDashboard() {
       const bs = getBS(b.id);
       const div = document.createElement('div');
       div.className = 'dash-item' + (i === currentIdx ? ' current' : '');
-      const firstName = b.contact ? b.contact.trim().split(' ')[0] : '';
+      const firstName = (b.contact || b.principal || '').trim().split(' ')[0];
       const nextAction = bs.nextAction || (bs.callLog && bs.callLog.length ? 'Follow up' : 'First call — introduce yourself');
       div.innerHTML = `<span class="dash-num">${i+1}</span>
         <div class="dash-info">
@@ -545,14 +561,14 @@ function updateCounters() {
   const fuCount = businesses.filter(b => getBS(b.id).stat === 'FU').length;
   const vmCount = businesses.filter(b => getBS(b.id).stat === 'VM').length;
 
-  document.getElementById('call-count').textContent = `${totalCalled}/575 called`;
+  document.getElementById('call-count').textContent = `${totalCalled}/${businesses.length} called`;
   document.getElementById('zoom-count').textContent = `Zooms: ${mtgCount}`;
   document.getElementById('fu-count').textContent = `FU: ${fuCount}`;
   document.getElementById('dash-total').textContent = filtered.length;
   document.getElementById('dash-called').textContent = totalCalled;
   document.getElementById('dash-mtg').textContent = mtgCount;
   document.getElementById('dash-fu').textContent = fuCount;
-  const pct = (totalCalled / 575 * 100).toFixed(1);
+  const pct = businesses.length ? (totalCalled / businesses.length * 100).toFixed(1) : 0;
   document.getElementById('dash-fill').style.width = pct + '%';
 
   // TODAY tracker
