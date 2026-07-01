@@ -304,9 +304,7 @@ html,body{height:100%;background:#0b0b18;color:#e2e8f0;font-family:system-ui,-ap
       Cordell Jones Caller
       <span class="call-count" id="call-count">0/575 called</span><span class="call-count" id="zoom-count" style="margin-left:8px;color:#a78bfa">Zooms: 0</span><span class="call-count" id="fu-count" style="margin-left:8px;color:#fbbf24">FU: 0</span>
     </div>
-    <select id="city-select" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:5px 10px;border-radius:6px;font-size:13px;cursor:pointer">
-      <option value="Savannah">Savannah, GA (575)</option>
-      <option value="Rexburg">Rexburg, ID (193)</option>
+    <select id="city-select" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:5px 10px;border-radius:6px;font-size:13px;cursor:pointer;max-width:220px">
     </select>
     <div class="nav-controls">
       <button class="nav-btn" id="prev-btn">← Prev</button>
@@ -550,6 +548,7 @@ async function init() {
     document.getElementById('biz-name').textContent = 'Error loading businesses.json';
     return;
   }
+  populateCitySelect();
   switchCity('Savannah');
   setupEvents();
   render();
@@ -558,10 +557,49 @@ async function init() {
 function switchCity(city) {
   currentCity = city;
   businesses = allBusinesses.filter(b => b.city === city);
-  const cityLabel = city === 'Savannah' ? 'SAVANNAH, GA' : 'REXBURG, ID';
+  const sampleBiz = businesses[0];
+  const state = sampleBiz ? sampleBiz.state : '';
+  const cityLabel = state ? `${city.toUpperCase()}, ${state.toUpperCase()}` : city.toUpperCase();
   document.getElementById('biz-panel-header').querySelector('span').textContent = '🏢 ' + cityLabel + ' — BUSINESS';
   document.getElementById('biz-jump').max = businesses.length;
   applyFilter('all');
+}
+
+function populateCitySelect() {
+  const sel = document.getElementById('city-select');
+  sel.innerHTML = '';
+  // Group cities by state, preserve a sensible order: GA, ID, then UT (or others) alphabetically
+  const cityMeta = {}; // city -> {state, count}
+  allBusinesses.forEach(b => {
+    if (!b.city) return;
+    if (!cityMeta[b.city]) cityMeta[b.city] = { state: b.state || '', count: 0 };
+    cityMeta[b.city].count++;
+  });
+  const stateOrder = ['GA', 'ID'];
+  const states = Object.keys(
+    Object.values(cityMeta).reduce((acc, m) => { acc[m.state || 'Other'] = true; return acc; }, {})
+  ).sort((a, b) => {
+    const ai = stateOrder.indexOf(a), bi = stateOrder.indexOf(b);
+    if (ai !== -1 && bi !== -1) return ai - bi;
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+    return a.localeCompare(b);
+  });
+  const stateNames = { GA: 'Georgia', ID: 'Idaho', UT: 'Utah' };
+  states.forEach(st => {
+    const citiesInState = Object.keys(cityMeta)
+      .filter(c => (cityMeta[c].state || 'Other') === st)
+      .sort((a, b) => cityMeta[b].count - cityMeta[a].count);
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = stateNames[st] || st;
+    citiesInState.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = `${c}, ${st} (${cityMeta[c].count})`;
+      optgroup.appendChild(opt);
+    });
+    sel.appendChild(optgroup);
+  });
 }
 
 function applyFilter(f) {
