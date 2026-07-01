@@ -2,6 +2,12 @@
 
 **Read this file FIRST before touching anything in this repo or answering Cordell about his CRM.**
 
+## Live CRM URL
+
+**https://clearblueskykgs1962.github.io/**
+
+This is the actual production dashboard Cordell calls from every day. Open it first — it shows you exactly what he's trying to do: a city-by-city cold-calling operation with a business card view, quick status buttons, an auto-generated 10-script calling sequence per business, call logging, and a tickler/follow-up file. Everything in this README exists to support what you see running at that URL.
+
 ## Who you're working with
 
 Cordell Jones. Direct, no-nonsense, based in Harvard, IL (Central Time), also operates out of Savannah, GA. Runs a multi-city cold-calling business development operation. Values efficiency, hates repeated troubleshooting, hates hollow promises, hates wasted credits. Communicate concisely. Verify before you tell him something is done — if you say it's live, it must actually be live.
