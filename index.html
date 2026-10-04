@@ -276,4 +276,111 @@ html,body{height:100%;background:#eef2f8;color:#1e293b;font-family:system-ui,-ap
 .na-row{margin-bottom:8px}
 .na-row label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b;display:block;margin-bottom:3px}
 .na-input{width:100%;background:#f1f5f9;border:1px solid #cbd5e1;color:#1e293b;padding:6px 10px;border-radius:6px;font-size:12px;font-family:inherit}
-.na-input:focus{outline:n
+.na-input:focus{outline:none;border-color:#22c55e}
+.log-btns-row{display:flex;gap:6px;margin-bottom:6px}
+.log-btn{flex:1;background:#dcfce7;border:2px solid #166534;color:#4ade80;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.log-btn:hover{background:#14532d}
+.log-next-btn{flex:1;background:#dbeafe;border:2px solid #0369a1;color:#38bdf8;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.log-next-btn:hover{background:#bfdbfe}
+
+/* ── SUPERSTAR PANEL 4 TODAY QUEUE ── */
+.queue-section{margin-bottom:12px}
+.queue-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#4ade80;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.queue-done-badge{font-size:10px;padding:1px 8px;border-radius:10px;background:#14532d;color:#4ade80;border:1px solid #16a34a44}.queue-item{cursor:pointer;padding:5px 8px;background:#f1f5f9;border-radius:6px;margin-bottom:4px;border:1px solid #cbd5e1;display:flex;align-items:center;gap:6px;transition:border-color .15s}
+.queue-item:hover{border-color:#94a3b8}
+.queue-label{font-size:10px;font-weight:700;min-width:72px}
+.queue-name{flex:1;font-size:12px;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+queue-call{color:#38bdf8;text-decoration:none;font-size:11px;white-space:nowrap}
+.queue-divider{border:none;border-top:1px solid #f1f5f9;margin:0 0 10px}
+</style>
+<link rel="icon" type="image/png" href="https://galaxy-prod.tlcdn.com/gen/01a908f71f57461f82741248e8994756.png">
+</head>
+<body>
+<div id="app">
+  <!-- TOP BAR -->
+  <nav id="topbar">
+    <div class="brand">
+      <img src="https://galaxy-prod.tlcdn.com/gen/01a908f71f57461f82741248e8994756.png" alt="Cordell Jones Consulting" style="height:28px;width:auto;vertical-align:middle;margin-right:6px" />
+      Cordell Jones Caller
+      <span class="call-count" id="call-count">0/575 called</span><span class="call-count" id="zoom-count" style="margin-left:8px;color:#a78bfa">Zooms: 0</span><span class="call-count" id="fu-count" style="margin-left:8px;color:#fbbf24">FU: 0</span>
+    </div>
+    <select id="city-select" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#1e293b;padding:5px 10px;border-radius:6px;font-size:13px;cursor:pointer;max-width:220px">
+    </select>
+    <div class="nav-controls">
+      <button class="nav-btn" id="prev-btn">← Prev</button>
+      <input id="biz-jump" type="number" min="1" max="575" value="1">
+      <button class="nav-btn" id="next-btn">Next →</button>
+    </div>
+    <div class="trackers">
+      <div class="tracker">
+        <div class="tracker-label">TODAY</div>
+        <div class="dot-row" id="today-dots"></div>
+        <div class="tracker-val" id="today-val">0/5</div>
+      </div>
+      <div class="tracker">
+        <div class="tracker-label">WEEK</div>
+        <div class="dot-row" id="week-dots"></div>
+        <div class="tracker-val" id="week-val">0/25</div>
+      </div>
+      <div class="tracker">
+        <div class="tracker-label">MONTH</div>
+        <div class="dot-row" id="month-dots"></div>
+        <div class="tracker-val" id="month-val">0/100</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="action-btn" id="search-btn">🔍 Search</button>
+      <button class="action-btn export-btn" id="export-btn">↓ Export CSV</button>
+    </div>
+  </nav>
+
+  <!-- FILTER BAR -->
+  <div id="filterbar">
+    <div class="filter-pills">
+      <span class="pill active" data-filter="all">All Businesses</span>
+      <span class="pill" data-filter="">New</span>
+      <span class="pill" data-filter="FU">Follow Up</span>
+      <span class="pill" data-filter="CB">Call Back</span>
+      <span class="pill" data-filter="VM">Voicemail</span>
+      <span class="pill" data-filter="MTG">Meeting Set</span>
+      <span class="pill" data-filter="DEAD">Not Interested</span>
+    </div>
+    <span id="biz-position">1 / 575</span>
+  </div>
+
+  <!-- 4 PANELS -->
+  <div id="panels">
+
+    <!-- TOP LEFT: BUSINESS -->
+    <div class="panel" id="panel-biz">
+      <div class="panel-header" id="biz-panel-header" style="display:flex;justify-content:space-between;align-items:center">
+        <span>🏢 SAVANNAH, GA — BUSINESS</span>
+        <button class="expand-panel-btn" onclick="toggleExpandPanel('panel-biz')">⛶ Expand</button>
+      </div>
+      <div class="panel-body">
+        <div class="biz-top-row">
+          <span id="biz-category-badge"></span>
+          <span id="biz-call-badge" class="call-count-badge"></span>
+        </div>
+        <div id="biz-name-row">
+          <span id="biz-name">Loading…</span>
+          <span id="biz-num-display"></span>
+        </div>
+        <div id="biz-contact-row"></div>
+        <div id="biz-intel" class="biz-intel-row"></div>
+        <div id="phone-area"></div>
+        <div class="qs-label">QUICK STATUS</div>
+        <div class="quick-status-btns" id="quick-status-btns">
+          <button class="qs-btn" data-val="FU"   style="--c:#fbbf24">Follow Up</button>
+          <button class="qs-btn" data-val="CB"   style="--c:#60a5fa">Call Back</button>
+          <button class="qs-btn" data-val="VM"   style="--c:#64748b">Voicemail</button>
+          <button class="qs-btn" data-val="NA"   style="--c:#64748b">No Answer</button>
+          <button class="qs-btn" data-val="MTG"  style="--c:#4ade80">Meeting ★</button>
+          <button class="qs-btn" data-val="DTXS" style="--c:#f87171">Not Int.</button>
+          <button class="qs-btn" data-val="DNC"  style="--c:#ef4444">DNC</button>
+        </div>
+        <textarea id="notes-field" class="notes-textarea" placeholder="Quick notes…"></textarea>
+        <div id="last-call-info" class="last-call-info"></div>
+      </div>
+    </div>
+
