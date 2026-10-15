@@ -1,0 +1,11 @@
+
+/* ── SUPERSTAR PANEL 4 TODAY QUEUE ── */
+.queue-section{margin-bottom:12px}
+.queue-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#4ade80;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.queue-done-badge{font-size:10px;padding:1px 8px;border-radius:10px;background:#14532d;color:#4ade80;border:1px solid #16a34a44}
+.queue-item{cursor:pointer;padding:5px 8px;background:#28395c;border-radius:6px;margin-bottom:4px;border:1px solid #3f5480;display:flex;align-items:center;gap:6px;transition:border-color .15s}
+.queue-item:hover{border-color:#475569}
+.queue-label{font-size:10px;font-weight:700;min-width:72px}
+.queue-name{flex:1;font-size:12px;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.queue-call{color:#38bdf8;text-decoration:none;font-size:11px;white-space:nowrap}
+.queue-divider{border:none;border-top:1px solid #28395c;margin:0 0 10px}
