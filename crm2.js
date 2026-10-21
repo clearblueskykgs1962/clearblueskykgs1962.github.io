@@ -116,7 +116,7 @@ function render() {
   const rawPhone = (biz.phone || '').replace(/\D/g, '');
   if (rawPhone.length >= 10) {
     const digits = rawPhone.length === 11 ? rawPhone.slice(1) : rawPhone;
-    phoneArea.innerHTML = `<a class="phone-btn" href="tel:+1${digits}">
+    phoneArea.innerHTML = `<a class="phone-btn" href="zoomphonecall:+1${digits}">
       📞 ${biz.phone} <span class="gvoice">Zoom →</span>
     </a>`;
   } else {
