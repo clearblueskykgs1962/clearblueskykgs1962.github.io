@@ -164,7 +164,7 @@ function renderTickler() {
       const label = s < 0 ? Math.abs(s)+'d LATE' : s===0 ? 'TODAY' : s===8888 ? 'FIRST CALL' : 'in '+s+'d';
       const lc = s<0 ? '#ef4444' : s===0 ? '#fbbf24' : s===8888 ? '#4ade80' : '#94a3b8';
       const rawPh = (b.phone||'').replace(/\D/g,'');
-      const ph = rawPh.length>=10 ? '<a class="queue-call" href="tel:+1'+(rawPh.length===11?rawPh.slice(1):rawPh)+'" onclick="event.stopPropagation()">☎ Call</a>' : '';
+      const ph = rawPh.length>=10 ? '<a class="queue-call" href="zoomphonecall:+1'+(rawPh.length===11?rawPh.slice(1):rawPh)+'" onclick="event.stopPropagation()">☎ Call</a>' : '';
       queueHtml += '<div class="queue-item" data-bizid="' + b.id + '">'
         + '<span class="queue-label" style="color:'+lc+'">'+label+'</span>'
         + '<span class="queue-name">'+b.name+'</span>'
@@ -178,7 +178,7 @@ function renderTickler() {
     const raw = (b.phone||'').replace(/\D/g,'');
     if (raw.length >= 10) {
       const d = raw.length===11 ? raw.slice(1) : raw;
-      return `<a class="t-phone" href="tel:+1${d}" onclick="event.stopPropagation()">📞 ${b.phone}</a>`;
+      return `<a class="t-phone" href="zoomphonecall:+1${d}" onclick="event.stopPropagation()">📞 ${b.phone}</a>`;
     }
     return `<span class="t-phone-none">No phone</span>`;
   }
