@@ -135,7 +135,12 @@ function render() {
     const chips = [];
     if (biz.credit_score) chips.push('<span class="intel-chip blue">Credit: ' + biz.credit_score + '</span>');
     if (biz.employee_size) chips.push('<span class="intel-chip">Employees: ' + biz.employee_size + '</span>');
-    if (biz.sales_volume) chips.push('<span class="intel-chip green">Sales: $' + Number(biz.sales_volume).toLocaleString() + '</span>');
+    if (biz.sales_volume) {
+      var svRaw = String(biz.sales_volume).trim();
+      var svNum = Number(svRaw.replace(/[$,]/g, ''));
+      var svLabel = (svRaw !== '' && !isNaN(svNum)) ? '$' + svNum.toLocaleString() : svRaw;
+      chips.push('<span class="intel-chip green">Sales: ' + svLabel + '</span>');
+    }
     intelEl.innerHTML = chips.join('');
   }
   document.querySelectorAll('.qs-btn').forEach(function(b2) {
